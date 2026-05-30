@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Marketing Review UI</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 900px; margin: 40px auto; padding: 0 20px; background: #f5f5f5; }
+    h1 { color: #333; }
+    .card { background: white; border-radius: 8px; padding: 24px; margin-bottom: 24px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+    .card h2 { margin-top: 0; color: #444; }
+    .badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; margin-bottom: 12px; }
+    .badge-ready { background: #e3f2fd; color: #1565c0; }
+    .badge-approved { background: #e8f5e9; color: #2e7d32; }
+    .badge-rejected { background: #ffebee; color: #c62828; }
+    .content-box { background: #f9f9f9; border-left: 4px solid #1976d2; padding: 12px 16px; margin: 12px 0; white-space: pre-wrap; font-size: 13px; max-height: 300px; overflow-y: auto; border-radius: 4px; }
+    .meta { color: #666; font-size: 13px; margin-bottom: 8px; }
+    .actions { margin-top: 16px; display: flex; gap: 12px; }
+    button { padding: 10px 24px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: bold; }
+    .btn-approve { background: #4caf50; color: white; }
+    .btn-approve:hover { background: #388e3c; }
+    .btn-reject { background: #f44336; color: white; }
+    .btn-reject:hover { background: #c62828; }
+    .msg { margin-top: 8px; font-size: 13px; color: #555; }
+    #loading { text-align: center; padding: 40px; color: #888; }
+  </style>
+</head>
+<body>
+  <h1>📋 Marketing Campaign Review</h1>
+  <p>Review AI-generated marketing content and approve or reject each campaign.</p>
+  <div id="loading">Loading campaigns...</div>
+  <div id="cards"></div>
+
+  <script>
+    async function loadContent() {
+      const res = await fetch('/api/content');
+      const data = await res.json();
+      const container = document.getElementById('cards');
+      document.getElementById('loading').style.display = 'none';
+
+      if (!data.rows || data.rows.length === 0) {
+        container.innerHTML = '<p>No content found. Run the Content Agent first.</p>';
+        return;
+      }
+
+      data.rows.forEach((row, index) => {
+        const status = row['Review Status'] || row['Status'] || 'Content Ready';
+        const badgeClass = status === 'Approved' ? 'badge-approved' : status === 'Rejected' ? 'badge-rejected' : 'badge-ready';
+
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.id = `card-${index}`;
+        card.innerHTML = `
+          <h2>${row['Topic'] || 'Untitled'}</h2>
+          <span class="badge ${badgeClass}">${status}</span>
+          <div class="meta"><strong>Product:</strong> ${row['Product'] || '-'} &nbsp;|&nbsp; <strong>Audience:</strong> ${row['Target Audience'] || '-'}</div>
+          <div class="content-box">${row['Content Output'] || 'No content available.'}</div>
+          <div class="actions">
+            <button class="btn-approve" onclick="approve(${index})">✅ Approve</button>
+            <button class="btn-reject" onclick="reject(${index})">❌ Reject</button>
+          </div>
+          <div class="msg" id="msg-${index}"></div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    async function approve(index) {
+      const res = await fetch(`/api/approve/${index}`, { method: 'POST' });
+      const data = await res.json();
+      document.getElementById(`msg-${index}`).textContent = `✅ Approved: ${data.topic}`;
+      document.getElementById(`msg-${index}`).style.color = 'green';
+    }
+
+    async function reject(index) {
+      const res = await fetch(`/api/reject/${index}`, { method: 'POST' });
+      const data = await res.json();
+      document.getElementById(`msg-${index}`).textContent = `❌ Rejected: ${data.topic}`;
+      document.getElementById(`msg-${index}`).style.color = 'red';
+    }
+
+    loadContent();
+  </script>
+</body>
+</html>
