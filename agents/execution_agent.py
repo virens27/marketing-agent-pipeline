@@ -15,7 +15,7 @@ def read_approved():
     sheet = gc.open_by_key(config.SPREADSHEET_ID)
     worksheet = sheet.worksheet(config.SHEET_REVIEW)
     rows = worksheet.get_all_records()
-    approved = [r for r in rows if r.get("Review Status") == "Approved"]
+    approved = [r for r in rows if "Approved" in str(r.values())]
     return approved
 
 def run_execution(row: dict) -> dict:
