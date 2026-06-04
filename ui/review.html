@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -21,334 +20,423 @@
     }
   </script>
   <style>
-    body {
-      background: #0f1117;
-    }
-
-    ::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    ::-webkit-scrollbar-track {
-      background: #1a1d2e;
-    }
-
-    ::-webkit-scrollbar-thumb {
-      background: #4a5568;
-      border-radius: 3px;
-    }
-
-    @keyframes spin {
-      to {
-        transform: rotate(360deg);
-      }
-    }
-
-    .spinner {
-      animation: spin 0.8s linear infinite;
-    }
-
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .fade-in {
-      animation: fadeIn 0.3s ease forwards;
-    }
+    body { background: #0f1117; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #1a1d2e; }
+    ::-webkit-scrollbar-thumb { background: #4a5568; border-radius: 3px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner { animation: spin 0.8s linear infinite; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-in { animation: fadeIn 0.3s ease forwards; }
+    .md h3 { color: #63b3ed; font-size: 14px; font-weight: 700; margin: 12px 0 6px; }
+    .md strong { color: #e2e8f0; font-weight: 700; }
+    .md em { color: #cbd5e0; font-style: italic; }
+    .md li { margin-left: 18px; list-style: disc; margin-bottom: 2px; }
+    .md br { display: block; content: ""; margin: 2px 0; }
   </style>
 </head>
-
 <body>
-  <div id="root"></div>
+<div id="root"></div>
 
-  <script type="text/babel">
-    const { useState, useEffect } = React;
+<script type="text/babel">
+const { useState, useEffect } = React;
 
-    // ── PIPELINE STEPS ──────────────────────────────────────────────
-    const STEPS = [
-      { id: 1, label: 'Research', icon: '🔍' },
-      { id: 2, label: 'Analysis', icon: '📊' },
-      { id: 3, label: 'Content', icon: '✍️' },
-      { id: 4, label: 'Review', icon: '👁️' },
-      { id: 5, label: 'Execution', icon: '🚀' },
-    ];
+// ── MARKDOWN RENDERER ────────────────────────────────────────────
+function renderMarkdown(text) {
+  if (!text) return '';
+  return text
+    .replace(/### (.*?)(\n|$)/g, '<h3>$1</h3>')
+    .replace(/## (.*?)(\n|$)/g,  '<h3>$1</h3>')
+    .replace(/\*\*(.*?)\*\*/g,   '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g,       '<em>$1</em>')
+    .replace(/^- (.*?)(\n|$)/gm, '<li>$1</li>')
+    .replace(/^\d+\. (.*?)(\n|$)/gm, '<li>$1</li>')
+    .replace(/\n/g, '<br/>');
+}
 
-    function PipelineTracker({ activeStep = 4 }) {
-      return (
-        <div className="bg-dark-800 border-b border-dark-600 px-10 py-5 overflow-x-auto">
-          <div className="flex items-center gap-0 min-w-max">
-            {STEPS.map((step, i) => {
-              const done = step.id < activeStep;
-              const active = step.id === activeStep;
-              return (
-                <React.Fragment key={step.id}>
-                  <div className="flex flex-col items-center gap-1">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all
-                  ${done ? 'bg-green-900 border-green-500 text-green-400 shadow-lg shadow-green-900/40' : ''}
-                  ${active ? 'bg-blue-900 border-blue-400 text-blue-300 shadow-lg shadow-blue-900/60' : ''}
-                  ${!done && !active ? 'bg-dark-600 border-gray-600 text-gray-500' : ''}
+// ── PIPELINE STEPS ──────────────────────────────────────────────
+const STEPS = [
+  { id: 1, label: 'Research',  icon: '🔍' },
+  { id: 2, label: 'Analysis',  icon: '📊' },
+  { id: 3, label: 'Content',   icon: '✍️'  },
+  { id: 4, label: 'Review',    icon: '👁️'  },
+  { id: 5, label: 'Execution', icon: '🚀' },
+];
+
+function PipelineTracker({ activeStep = 4 }) {
+  return (
+    <div className="border-b border-dark-600 px-10 py-5 overflow-x-auto" style={{background:'#1a1d2e'}}>
+      <div className="flex items-center gap-0 min-w-max">
+        {STEPS.map((step, i) => {
+          const done   = step.id < activeStep;
+          const active = step.id === activeStep;
+          return (
+            <React.Fragment key={step.id}>
+              <div className="flex flex-col items-center gap-1">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all
+                  ${done   ? 'bg-green-900 border-green-500 text-green-400 shadow-lg' : ''}
+                  ${active ? 'bg-blue-900 border-blue-400 text-blue-300 shadow-lg' : ''}
+                  ${!done && !active ? 'bg-gray-800 border-gray-600 text-gray-500' : ''}
                 `}>
-                      {done ? '✓' : step.icon}
-                    </div>
-                    <span className={`text-xs font-medium
-                  ${done ? 'text-green-400' : ''}
+                  {done ? '✓' : step.icon}
+                </div>
+                <span className={`text-xs font-medium
+                  ${done   ? 'text-green-400' : ''}
                   ${active ? 'text-blue-300 font-semibold' : ''}
                   ${!done && !active ? 'text-gray-500' : ''}
                 `}>{step.label}</span>
-                  </div>
-                  {i < STEPS.length - 1 && (
-                    <div className={`w-16 h-0.5 mb-5 mx-1 transition-all ${done ? 'bg-green-500' : 'bg-dark-600'}`} />
-                  )}
-                </React.Fragment>
-              );
-            })}
-          </div>
+              </div>
+              {i < STEPS.length - 1 && (
+                <div className={`w-16 h-0.5 mb-5 mx-1 transition-all ${done ? 'bg-green-500' : 'bg-gray-700'}`} />
+              )}
+            </React.Fragment>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ── STAT CARD ────────────────────────────────────────────────────
+function StatCard({ label, value, color, icon }) {
+  const colors = {
+    blue:   'text-blue-400',
+    green:  'text-green-400',
+    red:    'text-red-400',
+    yellow: 'text-yellow-400',
+  };
+  return (
+    <div className="border border-gray-700 rounded-xl px-5 py-4 flex-1 min-w-[120px]" style={{background:'#1a1d2e'}}>
+      <div className="flex items-center gap-2 mb-1">
+        <span className="text-lg">{icon}</span>
+        <p className="text-xs text-gray-500 uppercase tracking-wider">{label}</p>
+      </div>
+      <p className={`text-3xl font-bold mt-1 ${colors[color] || 'text-white'}`}>{value ?? '—'}</p>
+    </div>
+  );
+}
+
+// ── BADGE ────────────────────────────────────────────────────────
+function Badge({ status }) {
+  const map = {
+    'Approved':      'bg-green-900 text-green-400 border border-green-700',
+    'Rejected':      'bg-red-900   text-red-400   border border-red-700',
+    'Content Ready': 'bg-blue-900  text-blue-300  border border-blue-700',
+  };
+  const cls = map[status] || map['Content Ready'];
+  return (
+    <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${cls}`}>
+      {status}
+    </span>
+  );
+}
+
+// ── SUMMARY PANEL ────────────────────────────────────────────────
+function SummaryPanel({ rows }) {
+  const approved = rows.filter(r => r._status === 'Approved');
+  const rejected = rows.filter(r => r._status === 'Rejected');
+  const pending  = rows.filter(r => r._status === 'Content Ready');
+
+  return (
+    <div className="border border-gray-700 rounded-2xl p-5 sticky top-6" style={{background:'#1a1d2e'}}>
+      <h3 className="text-white font-bold text-base mb-4 flex items-center gap-2">
+        <span>📋</span> Pipeline Summary
+      </h3>
+
+      <div className="space-y-3 mb-5">
+        <div className="flex justify-between items-center text-sm">
+          <span className="text-gray-400">Total Campaigns</span>
+          <span className="text-white font-bold">{rows.length}</span>
         </div>
-      );
-    }
-
-    // ── STAT CARD ────────────────────────────────────────────────────
-    function StatCard({ label, value, color }) {
-      const colors = {
-        blue: 'text-blue-400',
-        green: 'text-green-400',
-        red: 'text-red-400',
-        yellow: 'text-yellow-400',
-      };
-      return (
-        <div className="bg-dark-800 border border-dark-600 rounded-xl px-5 py-4 min-w-[130px]">
-          <p className="text-xs text-gray-500 uppercase tracking-wider">{label}</p>
-          <p className={`text-3xl font-bold mt-1 ${colors[color] || 'text-white'}`}>{value ?? '—'}</p>
-        </div>
-      );
-    }
-
-    // ── BADGE ────────────────────────────────────────────────────────
-    function Badge({ status }) {
-      const map = {
-        Approved: 'bg-green-900 text-green-400 border border-green-700',
-        Rejected: 'bg-red-900   text-red-400   border border-red-700',
-        'Content Ready': 'bg-blue-900  text-blue-300  border border-blue-700',
-      };
-      const cls = map[status] || map['Content Ready'];
-      return (
-        <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${cls}`}>
-          {status}
-        </span>
-      );
-    }
-
-    // ── CAMPAIGN CARD ────────────────────────────────────────────────
-    function CampaignCard({ row, index, onApprove, onReject }) {
-      const [open, setOpen] = useState(index === 0);
-      const [tab, setTab] = useState('content');
-      const [loading, setLoading] = useState(null);
-      const [msg, setMsg] = useState(null);
-
-      const status = row._status || 'Content Ready';
-      const borderColor = status === 'Approved' ? 'border-green-700' : status === 'Rejected' ? 'border-red-700' : 'border-dark-600';
-
-      async function handleApprove() {
-        setLoading('approve');
-        await onApprove(index);
-        setMsg({ type: 'approved', text: `Approved at ${new Date().toLocaleTimeString()}` });
-        setLoading(null);
-      }
-
-      async function handleReject() {
-        setLoading('reject');
-        await onReject(index);
-        setMsg({ type: 'rejected', text: `Rejected at ${new Date().toLocaleTimeString()}` });
-        setLoading(null);
-      }
-
-      return (
-        <div className={`bg-dark-800 border ${borderColor} rounded-2xl mb-5 overflow-hidden fade-in transition-all`}>
-          {/* Card Header */}
+        <div className="w-full bg-gray-800 rounded-full h-2">
           <div
-            className="flex items-center justify-between px-6 py-5 cursor-pointer hover:bg-white/5 transition-all"
-            onClick={() => setOpen(!open)}
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-dark-600 flex items-center justify-center text-xl">
-                {status === 'Approved' ? '✅' : status === 'Rejected' ? '❌' : '📋'}
-              </div>
-              <div>
-                <h3 className="text-white font-bold text-lg">{row['Topic'] || 'Untitled'}</h3>
-                <p className="text-gray-400 text-sm mt-0.5">
-                  <span className="text-gray-500">Product:</span> {row['Product'] || '—'}
-                  <span className="mx-2 text-gray-600">·</span>
-                  <span className="text-gray-500">Audience:</span> {row['Target Audience'] || '—'}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Badge status={status} />
-              <span className={`text-gray-400 text-lg transition-transform duration-200 ${open ? 'rotate-180' : ''}`}>▼</span>
-            </div>
-          </div>
-
-          {/* Card Body */}
-          {open && (
-            <div className="px-6 pb-6 border-t border-dark-600">
-              {/* Tabs */}
-              <div className="flex gap-1 mt-4 mb-4 border-b border-dark-600">
-                {['content', 'analysis'].map(t => (
-                  <button
-                    key={t}
-                    onClick={() => setTab(t)}
-                    className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-all
-                  ${tab === t ? 'text-blue-400 border-blue-400' : 'text-gray-500 border-transparent hover:text-gray-300'}`}
-                  >
-                    {t === 'content' ? '✍️ Content' : '📊 Analysis'}
-                  </button>
-                ))}
-              </div>
-
-              {/* Tab Content */}
-              <div className="bg-dark-900 border border-dark-600 rounded-xl p-4 max-h-72 overflow-y-auto
-                          text-sm text-gray-300 leading-relaxed whitespace-pre-wrap font-mono">
-                {tab === 'content'
-                  ? (row['Content Output'] || 'No content available.')
-                  : (row['Analysis Output'] || 'No analysis available.')}
-              </div>
-
-              {/* Actions */}
-              <div className="flex items-center gap-3 mt-5 pt-5 border-t border-dark-600">
-                <button
-                  onClick={handleApprove}
-                  disabled={!!loading}
-                  className="flex items-center gap-2 px-6 py-2.5 bg-green-800 hover:bg-green-700
-                         text-white font-semibold rounded-xl transition-all hover:-translate-y-0.5
-                         disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-                >
-                  {loading === 'approve' ? <span className="spinner inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> : '✅'}
-                  Approve
-                </button>
-                <button
-                  onClick={handleReject}
-                  disabled={!!loading}
-                  className="flex items-center gap-2 px-6 py-2.5 bg-red-900 hover:bg-red-800
-                         text-white font-semibold rounded-xl transition-all hover:-translate-y-0.5
-                         disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-                >
-                  {loading === 'reject' ? <span className="spinner inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> : '❌'}
-                  Reject
-                </button>
-                {msg && (
-                  <span className={`text-sm ml-2 ${msg.type === 'approved' ? 'text-green-400' : 'text-red-400'}`}>
-                    {msg.type === 'approved' ? '✅' : '❌'} {msg.text}
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
+            className="bg-green-500 h-2 rounded-full transition-all"
+            style={{width: rows.length ? `${(approved.length/rows.length)*100}%` : '0%'}}
+          />
         </div>
-      );
-    }
+        <div className="flex justify-between text-xs text-gray-500">
+          <span>{approved.length} approved</span>
+          <span>{Math.round(rows.length ? (approved.length/rows.length)*100 : 0)}%</span>
+        </div>
+      </div>
 
-    // ── APP ──────────────────────────────────────────────────────────
-    function App() {
-      const [rows, setRows] = useState([]);
-      const [loading, setLoading] = useState(true);
+      <div className="space-y-2 mb-5">
+        {approved.length > 0 && (
+          <div className="bg-green-900/30 border border-green-800 rounded-lg p-3">
+            <p className="text-green-400 text-xs font-bold uppercase mb-2">✅ Approved</p>
+            {approved.map((r, i) => (
+              <p key={i} className="text-green-300 text-sm">• {r['Topic']}</p>
+            ))}
+          </div>
+        )}
+        {rejected.length > 0 && (
+          <div className="bg-red-900/30 border border-red-800 rounded-lg p-3">
+            <p className="text-red-400 text-xs font-bold uppercase mb-2">❌ Rejected</p>
+            {rejected.map((r, i) => (
+              <p key={i} className="text-red-300 text-sm">• {r['Topic']}</p>
+            ))}
+          </div>
+        )}
+        {pending.length > 0 && (
+          <div className="bg-yellow-900/30 border border-yellow-800 rounded-lg p-3">
+            <p className="text-yellow-400 text-xs font-bold uppercase mb-2">⏳ Pending</p>
+            {pending.map((r, i) => (
+              <p key={i} className="text-yellow-300 text-sm">• {r['Topic']}</p>
+            ))}
+          </div>
+        )}
+      </div>
 
-      useEffect(() => { loadContent(); }, []);
+      <div className="border-t border-gray-700 pt-4">
+        <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">Next Step</p>
+        {approved.length > 0 && pending.length === 0 ? (
+          <div className="bg-blue-900/30 border border-blue-700 rounded-lg p-3 text-center">
+            <p className="text-blue-300 text-sm font-semibold">🚀 Ready for Execution</p>
+            <p className="text-blue-400 text-xs mt-1">Press Ctrl+C and run Agent 5</p>
+          </div>
+        ) : (
+          <div className="bg-gray-800 rounded-lg p-3 text-center">
+            <p className="text-gray-400 text-sm">Review all campaigns to proceed</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
-      async function loadContent() {
-        setLoading(true);
-        const res = await fetch('/api/content');
-        const data = await res.json();
-        const mapped = (data.rows || []).map(r => ({
-          ...r,
-          _status: r['Review Status'] || r['Status'] || 'Content Ready'
-        }));
-        setRows(mapped);
-        setLoading(false);
-      }
+// ── CAMPAIGN CARD ────────────────────────────────────────────────
+function CampaignCard({ row, index, onApprove, onReject }) {
+  const [open,    setOpen]    = useState(index === 0);
+  const [tab,     setTab]     = useState('content');
+  const [loading, setLoading] = useState(null);
+  const [msg,     setMsg]     = useState(null);
 
-      async function handleApprove(index) {
-        await fetch(`/api/approve/${index}`, { method: 'POST' });
-        setRows(prev => prev.map((r, i) => i === index ? { ...r, _status: 'Approved' } : r));
-      }
+  const status      = row._status || 'Content Ready';
+  const borderColor = status === 'Approved'
+    ? 'border-green-700' : status === 'Rejected'
+    ? 'border-red-700'   : 'border-gray-700';
 
-      async function handleReject(index) {
-        await fetch(`/api/reject/${index}`, { method: 'POST' });
-        setRows(prev => prev.map((r, i) => i === index ? { ...r, _status: 'Rejected' } : r));
-      }
+  async function handleApprove() {
+    setLoading('approve');
+    await onApprove(index);
+    setMsg({ type: 'approved', text: `Approved at ${new Date().toLocaleTimeString()}` });
+    setLoading(null);
+  }
 
-      const total = rows.length;
-      const approved = rows.filter(r => r._status === 'Approved').length;
-      const rejected = rows.filter(r => r._status === 'Rejected').length;
-      const pending = total - approved - rejected;
+  async function handleReject() {
+    setLoading('reject');
+    await onReject(index);
+    setMsg({ type: 'rejected', text: `Rejected at ${new Date().toLocaleTimeString()}` });
+    setLoading(null);
+  }
 
-      return (
-        <div className="min-h-screen text-gray-100" style={{ background: '#0f1117' }}>
+  const contentHtml  = renderMarkdown(row['Content Output']  || 'No content available.');
+  const analysisHtml = renderMarkdown(row['Analysis Output'] || 'No analysis available.');
 
-          {/* Header */}
-          <div className="border-b border-dark-600 px-10 py-5 flex items-center justify-between"
-            style={{ background: 'linear-gradient(135deg,#1a1d2e,#16213e)' }}>
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-blue-900 border border-blue-700 flex items-center justify-center text-2xl">🤖</div>
-              <div>
-                <h1 className="text-xl font-bold text-white">Marketing Agent Pipeline</h1>
-                <p className="text-gray-400 text-sm">Human-in-the-loop review &amp; approval</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 bg-blue-900/40 border border-blue-700 text-blue-300 px-4 py-2 rounded-full text-sm font-semibold">
-              <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse inline-block" />
-              Live Review
-            </div>
+  return (
+    <div className={`border ${borderColor} rounded-2xl mb-5 overflow-hidden fade-in transition-all`} style={{background:'#1a1d2e'}}>
+
+      {/* Card Header */}
+      <div
+        className="flex items-center justify-between px-6 py-5 cursor-pointer hover:bg-white/5 transition-all"
+        onClick={() => setOpen(!open)}
+      >
+        <div className="flex items-center gap-4">
+          <div className="w-11 h-11 rounded-xl flex items-center justify-center text-xl border border-gray-700" style={{background:'#0f1117'}}>
+            {status === 'Approved' ? '✅' : status === 'Rejected' ? '❌' : '📋'}
+          </div>
+          <div>
+            <h3 className="text-white font-bold text-lg">{row['Topic'] || 'Untitled'}</h3>
+            <p className="text-gray-400 text-sm mt-0.5">
+              <span className="text-gray-500">Product:</span> {row['Product'] || '—'}
+              <span className="mx-2 text-gray-600">·</span>
+              <span className="text-gray-500">Audience:</span> {row['Target Audience'] || '—'}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <Badge status={status} />
+          <span className={`text-gray-400 text-lg transition-transform duration-200 select-none ${open ? 'rotate-180' : ''}`}>▼</span>
+        </div>
+      </div>
+
+      {/* Card Body */}
+      {open && (
+        <div className="px-6 pb-6 border-t border-gray-700">
+
+          {/* Tabs */}
+          <div className="flex gap-1 mt-4 mb-4 border-b border-gray-700">
+            {[
+              { key: 'content',  label: '✍️ Content'  },
+              { key: 'analysis', label: '📊 Analysis' },
+            ].map(t => (
+              <button
+                key={t.key}
+                onClick={() => setTab(t.key)}
+                className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-all
+                  ${tab === t.key
+                    ? 'text-blue-400 border-blue-400'
+                    : 'text-gray-500 border-transparent hover:text-gray-300'}`}
+              >
+                {t.label}
+              </button>
+            ))}
           </div>
 
-          {/* Pipeline Tracker */}
-          <PipelineTracker activeStep={4} />
+          {/* Content Box */}
+          <div
+            className="md rounded-xl p-4 max-h-72 overflow-y-auto text-sm text-gray-300 leading-relaxed border border-gray-700"
+            style={{background:'#0f1117'}}
+            dangerouslySetInnerHTML={{
+              __html: tab === 'content' ? contentHtml : analysisHtml
+            }}
+          />
 
-          {/* Stats */}
-          <div className="flex gap-4 px-10 py-5 flex-wrap">
-            <StatCard label="Total" value={total} color="blue" />
-            <StatCard label="Approved" value={approved} color="green" />
-            <StatCard label="Rejected" value={rejected} color="red" />
-            <StatCard label="Pending" value={pending} color="yellow" />
-          </div>
-
-          {/* Main */}
-          <div className="px-10 pb-10 max-w-4xl">
-            {loading ? (
-              <div className="flex flex-col items-center justify-center py-20 text-gray-500">
-                <div className="spinner w-10 h-10 border-4 border-dark-600 border-t-blue-400 rounded-full mb-4" />
-                <p>Loading campaigns...</p>
-              </div>
-            ) : rows.length === 0 ? (
-              <div className="text-center py-20 text-gray-500">
-                <p className="text-4xl mb-4">📭</p>
-                <p>No campaigns found. Run the pipeline first.</p>
-              </div>
-            ) : (
-              rows.map((row, i) => (
-                <CampaignCard
-                  key={i}
-                  row={row}
-                  index={i}
-                  onApprove={handleApprove}
-                  onReject={handleReject}
-                />
-              ))
+          {/* Actions */}
+          <div className="flex items-center gap-3 mt-5 pt-5 border-t border-gray-700">
+            <button
+              onClick={handleApprove}
+              disabled={!!loading}
+              className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-sm
+                         bg-green-800 hover:bg-green-700 text-white transition-all hover:-translate-y-0.5
+                         disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+            >
+              {loading === 'approve'
+                ? <span className="spinner inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                : '✅'} Approve
+            </button>
+            <button
+              onClick={handleReject}
+              disabled={!!loading}
+              className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-sm
+                         bg-red-900 hover:bg-red-800 text-white transition-all hover:-translate-y-0.5
+                         disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+            >
+              {loading === 'reject'
+                ? <span className="spinner inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                : '❌'} Reject
+            </button>
+            {msg && (
+              <span className={`text-sm ${msg.type === 'approved' ? 'text-green-400' : 'text-red-400'}`}>
+                {msg.type === 'approved' ? '✅' : '❌'} {msg.text}
+              </span>
             )}
           </div>
         </div>
-      );
+      )}
+    </div>
+  );
+}
+
+// ── APP ──────────────────────────────────────────────────────────
+function App() {
+  const [rows,    setRows]    = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => { loadContent(); }, []);
+
+  async function loadContent() {
+    setLoading(true);
+    try {
+      const res  = await fetch('/api/content');
+      const data = await res.json();
+      const mapped = (data.rows || []).map(r => ({
+        ...r,
+        _status: r['Review Status'] || r['Status'] || 'Content Ready'
+      }));
+      setRows(mapped);
+    } catch(e) {
+      console.error(e);
     }
+    setLoading(false);
+  }
 
-    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
-  </script>
+  async function handleApprove(index) {
+    await fetch(`/api/approve/${index}`, { method: 'POST' });
+    setRows(prev => prev.map((r, i) => i === index ? { ...r, _status: 'Approved' } : r));
+  }
+
+  async function handleReject(index) {
+    await fetch(`/api/reject/${index}`, { method: 'POST' });
+    setRows(prev => prev.map((r, i) => i === index ? { ...r, _status: 'Rejected' } : r));
+  }
+
+  const total    = rows.length;
+  const approved = rows.filter(r => r._status === 'Approved').length;
+  const rejected = rows.filter(r => r._status === 'Rejected').length;
+  const pending  = total - approved - rejected;
+
+  return (
+    <div className="min-h-screen text-gray-100" style={{background:'#0f1117'}}>
+
+      {/* Header */}
+      <div className="border-b border-gray-700 px-10 py-5 flex items-center justify-between"
+           style={{background:'linear-gradient(135deg,#1a1d2e,#16213e)'}}>
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-blue-900 border border-blue-700 flex items-center justify-center text-2xl">🤖</div>
+          <div>
+            <h1 className="text-xl font-bold text-white">Marketing Agent Pipeline</h1>
+            <p className="text-gray-400 text-sm">Human-in-the-loop review &amp; approval</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 bg-blue-900/40 border border-blue-700 text-blue-300 px-4 py-2 rounded-full text-sm font-semibold">
+          <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse inline-block" />
+          Live Review
+        </div>
+      </div>
+
+      {/* Pipeline Tracker */}
+      <PipelineTracker activeStep={4} />
+
+      {/* Stats */}
+      <div className="flex gap-4 px-10 py-5">
+        <StatCard label="Total"    value={total}    color="blue"   icon="📁" />
+        <StatCard label="Approved" value={approved} color="green"  icon="✅" />
+        <StatCard label="Rejected" value={rejected} color="red"    icon="❌" />
+        <StatCard label="Pending"  value={pending}  color="yellow" icon="⏳" />
+      </div>
+
+      {/* Main Layout — 2 columns */}
+      <div className="px-10 pb-10 flex gap-6 items-start">
+
+        {/* Left — Campaign Cards */}
+        <div className="flex-1">
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-20 text-gray-500">
+              <div className="spinner w-10 h-10 border-4 border-gray-700 border-t-blue-400 rounded-full mb-4" />
+              <p>Loading campaigns...</p>
+            </div>
+          ) : rows.length === 0 ? (
+            <div className="text-center py-20 text-gray-500">
+              <p className="text-5xl mb-4">📭</p>
+              <p className="text-lg">No campaigns found.</p>
+              <p className="text-sm mt-2">Run <code className="bg-gray-800 px-2 py-1 rounded">python main.py</code> first.</p>
+            </div>
+          ) : (
+            rows.map((row, i) => (
+              <CampaignCard
+                key={i}
+                row={row}
+                index={i}
+                onApprove={handleApprove}
+                onReject={handleReject}
+              />
+            ))
+          )}
+        </div>
+
+        {/* Right — Summary Panel */}
+        {!loading && rows.length > 0 && (
+          <div className="w-72 flex-shrink-0">
+            <SummaryPanel rows={rows} />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
 </body>
-
 </html>
